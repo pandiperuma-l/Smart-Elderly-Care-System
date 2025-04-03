@@ -51,11 +51,6 @@ POST	/add_safety	Logs fall detection alerts
 POST	/add_reminder	Adds a new daily reminder
 GET	/get_health	Fetches all health records
 GET	/get_safety	Fetches safety alerts
-📸 Screenshots
-Add images of your dashboard and SMS alerts here.
-
-🔮 Future Improvements
-📡 Integration with wearable health devices (smartwatches, IoT sensors).
 
 📱 Mobile app for push notifications & alerts.
 
