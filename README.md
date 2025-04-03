@@ -23,13 +23,11 @@ It integrates **health tracking, safety alerts, and daily reminders**, ensuring 
 ## ⚙️ Installation & Setup  
 
 ### **1️⃣ Clone the Repository**  
-```sh
+```
 git clone https://github.com/pandiperuma-l/Smart-Elderly-Care-System.git
 cd Smart-Elderly-Care-System
 2️⃣ Backend Setup (Flask API)
-sh
-Copy
-Edit
+
 cd backend
 pip install -r requirements.txt
 python app.py
