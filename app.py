@@ -1,19 +1,27 @@
 from flask import Flask, request, jsonify
 import sqlite3
-from twilio.rest import Client
-from flask_cors import CORS  # Import CORS
+import smtplib
+from email.mime.text import MIMEText
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS to allow frontend requests
+CORS(app)
 
-# Twilio Configuration
-TWILIO_ACCOUNT_SID = ""
-TWILIO_AUTH_TOKEN = ""
-TWILIO_PHONE_NUMBER = ""
-CAREGIVER_PHONE_NUMBER = ""
+# Email Configuration
+SENDER_EMAIL = ""         # 👈 Replace with your Gmail
+SENDER_PASSWORD = ""    # 👈 Replace with your Gmail App Password
+RECEIVER_EMAIL = ""  # 👈 Email to receive alerts
 
-# Initialize Twilio client
-client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+# Function to send email alert
+def send_email_alert(subject, body):
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = SENDER_EMAIL
+    msg["To"] = RECEIVER_EMAIL
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(SENDER_EMAIL, SENDER_PASSWORD)
+        server.send_message(msg)
 
 # Function to connect to the database
 def connect_db():
@@ -22,14 +30,6 @@ def connect_db():
 @app.route('/')
 def home():
     return "Elderly Care System is Running!"
-
-# Send SMS Alert
-def send_sms_alert(message):
-    client.messages.create(
-        body=message,
-        from_=TWILIO_PHONE_NUMBER,
-        to=CAREGIVER_PHONE_NUMBER
-    )
 
 # Route to add health monitoring data
 @app.route('/add_health', methods=['POST'])
@@ -45,7 +45,10 @@ def add_health():
     conn.close()
 
     if data['heart_rate'] > 100 or data['glucose_level'] > 200:
-        send_sms_alert(f"🚨 ALERT: {data['patient_name']} has abnormal health readings! Heart Rate: {data['heart_rate']}, Glucose: {data['glucose_level']}")
+        send_email_alert(
+            subject="🚨 Health Alert",
+            body=f"{data['patient_name']} has abnormal readings.\nHeart Rate: {data['heart_rate']}, Glucose: {data['glucose_level']}"
+        )
 
     return jsonify({"message": "Health data added successfully!"})
 
@@ -63,7 +66,10 @@ def add_safety():
     conn.close()
 
     if data['fall_detected']:
-        send_sms_alert(f"🚨 URGENT: {data['patient_name']} has fallen! Immediate assistance required.")
+        send_email_alert(
+            subject="🚨 Fall Detected",
+            body=f"{data['patient_name']} has fallen! Immediate assistance required."
+        )
 
     return jsonify({"message": "Safety event recorded successfully!"})
 
@@ -84,7 +90,6 @@ def add_reminder():
 
     return jsonify({"message": "Reminder added successfully!"})
 
-# ✅ Route to retrieve all health monitoring data
 @app.route('/get_health', methods=['GET'])
 def get_health():
     conn = connect_db()
@@ -106,7 +111,6 @@ def get_health():
 
     return jsonify(health_records)
 
-# ✅ Route to retrieve all safety monitoring data
 @app.route('/get_safety', methods=['GET'])
 def get_safety():
     conn = connect_db()
@@ -127,7 +131,6 @@ def get_safety():
 
     return jsonify(safety_records)
 
-# ✅ Route to retrieve all reminders
 @app.route('/get_reminders', methods=['GET'])
 def get_reminders():
     conn = connect_db()
@@ -146,6 +149,34 @@ def get_reminders():
         })
 
     return jsonify(reminder_records)
+
+@app.route('/reset_health', methods=['POST'])
+def reset_health():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM health_monitoring")
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Health records cleared."})
+
+@app.route('/reset_safety', methods=['POST'])
+def reset_safety():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM safety_monitoring")
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Safety records cleared."})
+
+@app.route('/reset_reminders', methods=['POST'])
+def reset_reminders():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM daily_reminders")
+    conn.commit()
+    conn.close()
+    return jsonify({"message": "Reminders cleared."})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
