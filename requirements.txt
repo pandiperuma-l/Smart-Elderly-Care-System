@@ -20,6 +20,7 @@ multidict==6.4.3
 packaging==24.2
 propcache==0.3.1
 PyJWT==2.10.1
+python==3.9 
 requests==2.32.3
 tailwindcss==0.0.1
 twilio==9.5.2
